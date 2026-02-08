@@ -1,5 +1,5 @@
-// Vercel Serverless Function - API Proxy
-// This handles requests to /api/messages and forwards them to Anthropic
+// Vercel Serverless Function - API Proxy with Shared API Key
+// This uses your API key stored in Vercel environment variables
 
 const https = require('https');
 
@@ -7,7 +7,7 @@ module.exports = async (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-api-key, anthropic-version');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, anthropic-version');
 
   // Handle preflight
   if (req.method === 'OPTIONS') {
@@ -19,10 +19,13 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const apiKey = req.headers['x-api-key'];
+  // Get API key from environment variable (set in Vercel)
+  const apiKey = process.env.ANTHROPIC_API_KEY;
   
   if (!apiKey) {
-    return res.status(401).json({ error: 'API key required' });
+    return res.status(500).json({ 
+      error: 'Server configuration error: API key not configured. Please set ANTHROPIC_API_KEY in Vercel environment variables.' 
+    });
   }
 
   const body = JSON.stringify(req.body);
